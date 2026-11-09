@@ -506,15 +506,36 @@
     return Math.max(0, p.total_months - Math.max(0, k));
   }
 
+  // Categories that are paid about once a month (rent fee, utilities, phone, subscriptions, tuition).
+  // They count in full but are kept out of "everyday" spending, so the 1st of the month doesn't look like a spree.
+  const DEFAULT_FIXED = ['Bills & phone', 'Subscriptions', 'Fees', 'Education'];
+  // A single line this big (flight, laptop, tuition) is a one-off, not everyday spending.
+  const ONE_OFF_CENTS = 25000;
+  function isFixedCategory(name, cats) {
+    const c = (cats || []).find(x => x.name === name);
+    if (c && c.fixed != null) return !!c.fixed;
+    return DEFAULT_FIXED.includes(name);
+  }
+  /** "fixed" = bills & one-offs; "everyday" = everything else. */
+  function splitKind(t, cats) {
+    return (isFixedCategory(t.category, cats) || counted(t) >= ONE_OFF_CENTS) ? 'fixed' : 'everyday';
+  }
+  function everydayUpTo(txns, mk, day, cats) {
+    return txns.filter(t => monthKey(t.date) === mk && +t.date.slice(8, 10) <= day && splitKind(t, cats) === 'everyday').reduce((a, t) => a + counted(t), 0);
+  }
+
   /**
    * Everything the month screen needs.
-   * txns: [{date, cents, my_share_cents, category, merchant}]
+   * txns: [{date, cents, my_share_cents, category, merchant}] ; cats: [{name, fixed}] (optional)
    * Instalment plans do NOT add to spending: the purchase already counted in full when it was made.
+   * There is deliberately no month-end projection: bills and one-offs make a straight-line pace misleading.
    * today: 'yyyy-mm-dd'
    */
-  function monthSummary(txns, mk, today) {
+  function monthSummary(txns, mk, today, cats) {
     const inMonth = txns.filter(t => monthKey(t.date) === mk);
     const total = inMonth.reduce((a, t) => a + counted(t), 0);
+    let fixed = 0, everyday = 0;
+    for (const t of inMonth) { if (splitKind(t, cats) === 'fixed') fixed += counted(t); else everyday += counted(t); }
 
     const byCat = new Map();
     for (const t of inMonth) byCat.set(t.category || 'Other', (byCat.get(t.category || 'Other') || 0) + counted(t));
@@ -524,20 +545,19 @@
     for (const t of inMonth) { const k = t.merchant || 'Unknown'; const s = shops.get(k) || { name: k, cents: 0, count: 0 }; s.cents += counted(t); s.count++; shops.set(k, s); }
     const topShops = [...shops.values()].filter(s => s.cents > 0).sort((a, b) => b.cents - a.cents).slice(0, 5);
 
-    const res = { month: mk, total, count: inMonth.length, categories, topShops };
+    const res = { month: mk, total, fixed, everyday, count: inMonth.length, categories, topShops };
     const curMk = monthKey(today);
     const prevMk = addMonths(mk, -1);
     if (mk === curMk) {
       const day = +today.slice(8, 10), dim = daysInMonth(mk);
       res.isCurrent = true; res.daysElapsed = day; res.daysInMonth = dim;
-      // Rent-like one-offs (Chexy fee) are small, so a straight daily pace is a fair rough guess.
-      res.projection = day >= 3 ? Math.round(total / day * dim) : null;
-      const cut = Math.min(day, daysInMonth(prevMk));
-      res.lastMonthSamePoint = txns.filter(t => monthKey(t.date) === prevMk && +t.date.slice(8, 10) <= cut).reduce((a, t) => a + counted(t), 0);
+      // Compare everyday spending only, at the same day of last month.
+      res.lastMonthEverydaySamePoint = everydayUpTo(txns, prevMk, Math.min(day, daysInMonth(prevMk)), cats);
     } else {
       res.isCurrent = false; res.isFuture = mk > curMk;
     }
     res.lastMonthTotal = monthTotal(txns, prevMk);
+    res.lastMonthEveryday = everydayUpTo(txns, prevMk, 31, cats);
     return res;
   }
   function monthTotal(txns, mk) {
@@ -560,6 +580,6 @@
     toCents, fromCents, parseAmount, parseDate, guessSlashOrder, parseCSV, detectLayout, csvToRaw,
     shopPart, merchantKey, cleanMerchant, isCardPayment, isChexy, chexyFee, isInstalmentFee, isPlanTransfer, categorize,
     baseFingerprint, buildImport, markPaidOff, pdfItemsToLines, parseStatementText, balanceCheck,
-    monthKey, addMonths, monthsBetween, daysInMonth, counted, planActive, planMonthsLeft, monthSummary, monthTotal, lastMonths, fmt
+    monthKey, addMonths, monthsBetween, daysInMonth, counted, planActive, planMonthsLeft, DEFAULT_FIXED, ONE_OFF_CENTS, isFixedCategory, splitKind, monthSummary, monthTotal, lastMonths, fmt
   };
 });

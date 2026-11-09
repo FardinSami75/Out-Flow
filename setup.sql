@@ -15,6 +15,8 @@ create table if not exists public.categories (
   created_at timestamptz not null default now()
 );
 create unique index if not exists categories_user_name on public.categories (user_id, name);
+-- Monthly bill (true/false). Empty means the default: Bills & phone, Subscriptions, Fees and Education are monthly bills.
+alter table public.categories add column if not exists fixed boolean;
 
 -- -------------------------------------------------------------- transactions
 create table if not exists public.transactions (

@@ -138,7 +138,24 @@ test('my share replaces the full amount', () => {
              { date: '2026-11-04', cents: 1000, category: 'Eating out', merchant: 'Z' }];
   const s = C.monthSummary(t, '2026-11', '2026-11-10');
   assert.strictEqual(s.total, 9000);
-  assert.strictEqual(s.projection, Math.round(9000 / 10 * 30));
+});
+test('bills and one-offs are kept apart from everyday spending', () => {
+  const t = [{ date: '2026-11-01', cents: 1400, category: 'Fees', merchant: 'Chexy fee' },
+             { date: '2026-11-02', cents: 7600, category: 'Bills & phone', merchant: 'Telus' },
+             { date: '2026-11-03', cents: 120000, category: 'Shopping', merchant: 'Best Buy' },   // one-off
+             { date: '2026-11-04', cents: 4500, category: 'Groceries', merchant: 'Safeway' },
+             { date: '2026-11-05', cents: 30000, my_share_cents: 3000, category: 'Eating out', merchant: 'Miraj' }, // my share only
+             { date: '2026-10-03', cents: 5000, category: 'Groceries', merchant: 'Safeway' },
+             { date: '2026-10-20', cents: 9000, category: 'Groceries', merchant: 'Safeway' }];
+  const s = C.monthSummary(t, '2026-11', '2026-11-05');
+  assert.strictEqual(s.fixed, 1400 + 7600 + 120000);
+  assert.strictEqual(s.everyday, 4500 + 3000);
+  assert.strictEqual(s.total, s.fixed + s.everyday);
+  assert.strictEqual(s.lastMonthEverydaySamePoint, 5000);   // only Oct 1-5
+  assert.strictEqual(s.projection, undefined);
+  // A category can be switched to a monthly bill
+  const s2 = C.monthSummary(t, '2026-11', '2026-11-05', [{ name: 'Groceries', fixed: true }, { name: 'Fees', fixed: false }]);
+  assert.strictEqual(s2.everyday, 1400 + 3000);
 });
 
 // Optional: the real Amex CSV, with month totals worked out separately.

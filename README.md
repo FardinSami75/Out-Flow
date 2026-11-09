@@ -6,7 +6,8 @@ Plain HTML, CSS and JavaScript. No build step. It runs on GitHub Pages and keeps
 
 ## What it does
 
-- **This month:** what you've spent so far, roughly where you'll end up by month end, and how that compares with the same point last month. The comparison turns amber only when you're spending noticeably faster (more than 15% ahead).
+- **This month:** what you've spent so far, split into **everyday** spending and **bills & one-offs**. Bills are categories marked *Monthly bill* (by default Bills & phone, Subscriptions, Fees (incl. the Chexy rent fee) and Education); one-offs are any single purchase of $250 or more. Only everyday spending is compared with the same point last month, so rent day or a big purchase doesn't skew it. The comparison turns amber only when everyday spending is noticeably higher (15%+ and at least $25). There's no month-end projection, because spending isn't steady enough for one to be useful.
+- **Monthly bill setting:** turn it on or off for any category under More → Categories (for example, make your own *Rent* or *Internet* category a monthly bill).
 - **Where it went:** spending by category and your top shops. Tap a category to see its lines.
 - **Last 6 months:** a simple bar chart. Tap a bar to jump to that month.
 - **Activity:** every line grouped by day, with search (across all months) and a category filter. Tap a line to edit or delete it. Tap its category to change it in one tap.

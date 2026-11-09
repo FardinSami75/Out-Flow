@@ -530,20 +530,17 @@ function bigMoney(c) {
 }
 function renderMonth(el) {
   const today = localToday(), txns = live();
-  const s = C.monthSummary(txns, state.month, today);
-  const mOnly = monthOnly(state.month);
+  const s = C.monthSummary(txns, state.month, today, state.cats);
+  const mOnly = monthOnly(state.month), prevName = monthOnly(C.addMonths(state.month, -1));
   let lines = '';
-  if (s.isCurrent) {
-    const dim = s.daysInMonth;
-    if (s.projection != null && s.count) lines += `<div class="pill"><span class="dot"></span>On pace for about <b class="num">${fmt0(s.projection)}</b> by ${esc(mOnly.slice(0, 3))} ${dim}</div>`;
-    if (s.lastMonthSamePoint > 0 && s.count) {
-      const diff = s.total - s.lastMonthSamePoint, more = diff > 0, faster = diff > s.lastMonthSamePoint * 0.15;
-      lines += `<div class="pill ${more && faster ? 'warn' : ''}">${more && faster ? '<span class="dot"></span>' : ''}<b class="num">${fmt0(Math.abs(diff))}</b> ${more ? 'more' : 'less'} than this point last month</div>`;
-    }
-  } else if (!s.isFuture && s.lastMonthTotal > 0 && s.count) {
-    const diff = s.total - s.lastMonthTotal;
-    lines += `<div class="pill"><b class="num">${fmt0(Math.abs(diff))}</b> ${diff > 0 ? 'more' : 'less'} than ${esc(monthOnly(C.addMonths(state.month, -1)))}</div>`;
-  }
+  if (s.count && s.fixed) lines += `<div class="pill" title="Bills: categories marked as monthly bills, plus any single purchase over ${fmt0(C.ONE_OFF_CENTS)}">Everyday <b class="num">${fmt0(s.everyday)}</b> · Bills &amp; one-offs <b class="num">${fmt0(s.fixed)}</b></div>`;
+  const cmp = (now, before, label) => {
+    const diff = now - before, more = diff > 0, faster = more && diff > before * 0.15 && diff >= 2500;
+    if (Math.abs(diff) < 100) return `<div class="pill">Everyday spending is about the same as ${label}</div>`;
+    return `<div class="pill ${faster ? 'warn' : ''}">${faster ? '<span class="dot"></span>' : ''}Everyday: <b class="num">${fmt0(Math.abs(diff))}</b> ${more ? 'more' : 'less'} than ${label}</div>`;
+  };
+  if (s.isCurrent && s.count && s.lastMonthEverydaySamePoint > 0) lines += cmp(s.everyday, s.lastMonthEverydaySamePoint, 'this point last month');
+  else if (!s.isCurrent && !s.isFuture && s.count && s.lastMonthEveryday > 0) lines += cmp(s.everyday, s.lastMonthEveryday, esc(prevName));
   const hero = `<section class="hero">
     <div class="eyebrow">${s.isCurrent ? 'Spent so far in ' + esc(mOnly) : 'Spent in ' + esc(mOnly)}</div>
     <div class="big num" aria-label="${esc(fmt(s.total))}">${bigMoney(s.total)}</div>
@@ -652,7 +649,7 @@ function renderMore(el) {
       <p class="muted" style="font-size:13px;margin:10px 0 0">For keeping track only. Plan purchases already counted in full the month you bought them, and the monthly fee counts under Fees.</p>
       <button class="btn ghost" id="addPlan" style="margin-top:6px">${I.plus} Add a plan</button></section>
     <section class="card"><h2>Categories</h2>
-      ${state.cats.map(c => `<button class="list-btn" data-cat="${c.id}"><span class="ic">${esc(c.icon || '•')}</span><div class="main">${esc(c.name)}</div>${I.chev}</button>`).join('')}
+      ${state.cats.map(c => `<button class="list-btn" data-cat="${c.id}"><span class="ic">${esc(c.icon || '•')}</span><div class="main">${esc(c.name)}${C.isFixedCategory(c.name, state.cats) ? '<div class="muted" style="font-size:12px">Monthly bill</div>' : ''}</div>${I.chev}</button>`).join('')}
       <button class="btn ghost" id="addCat" style="margin-top:6px">${I.plus} New category</button></section>
     <section class="card"><h2>Shops Outflow has learned <span class="side">${state.rules.length}</span></h2>
       ${state.rules.length ? state.rules.slice().sort((a, b) => a.merchant_key.localeCompare(b.merchant_key)).map(r => `<div class="row"><div class="main"><div class="title">${esc(C.cleanMerchant(r.merchant_key))}</div><div class="sub">Always ${esc(r.category)}</div></div><button class="btn danger" style="height:36px;padding:0 6px" data-rule="${r.id}">Forget</button></div>`).join('')
@@ -787,20 +784,23 @@ function openCatSheet(c) {
   openSheet(isNew ? 'New category' : 'Edit category', `
     <label class="field"><span>Name</span><input class="input" id="cName" value="${esc(c ? c.name : '')}" placeholder="e.g. Pets" ${isOther ? 'disabled' : ''}></label>
     <label class="field"><span>Emoji</span><input class="input" id="cIcon" value="${esc(c ? c.icon || '' : '')}" placeholder="🐾" maxlength="4" style="width:90px;text-align:center;font-size:20px"></label>
+    <div class="switch-row" style="margin-top:6px"><div><div class="t">Monthly bill</div><div class="d">Paid about once a month, like rent, utilities, phone or subscriptions. Kept apart from everyday spending.</div></div><label class="switch"><input type="checkbox" id="cFixed" ${C.isFixedCategory(c ? c.name : '', state.cats) ? 'checked' : ''}><i></i></label></div>
     ${!isNew && !isOther ? '<button class="btn danger block" id="cDel" style="margin-top:16px">Delete category</button><p class="muted" style="font-size:13px;text-align:center;margin:4px 0 0">Its lines move to Other.</p>' : ''}`,
     `<button class="btn primary block" id="cSave">${isNew ? 'Create' : 'Save'}</button>`, sh => {
       if (isNew) setTimeout(() => $('#cName', sh).focus(), 300);
       $('#cSave', sh).onclick = async () => {
-        const name = $('#cName', sh).value.trim().replace(/\s+/g, ' '), icon = $('#cIcon', sh).value.trim() || '•';
+        const name = $('#cName', sh).value.trim().replace(/\s+/g, ' '), icon = $('#cIcon', sh).value.trim() || '•', fixed = $('#cFixed', sh).checked;
         if (!name) { toast('Give the category a name.', true); return; }
         if (state.cats.some(x => x.name.toLowerCase() === name.toLowerCase() && x !== c)) { toast('You already have a category called ' + name + '.', true); return; }
         try {
-          if (isNew) { const [row] = await api.insertCats([{ name, icon, color: null, sort: 100 + state.cats.length }]); state.cats.push(row); toast('Created ' + name); }
+          if (isNew) { const [row] = await api.insertCats([{ name, icon, color: null, sort: 100 + state.cats.length }]); if (fixed) { await api.updateCat(row.id, { fixed }); row.fixed = fixed; } state.cats.push(row); toast('Created ' + name); }
           else {
             const old = c.name;
-            await api.updateCat(c.id, { name, icon });
+            const patch = { name, icon };
+            if (fixed !== C.isFixedCategory(old, state.cats)) patch.fixed = fixed;
+            await api.updateCat(c.id, patch);
             if (old !== name) { await api.updateTxCategory(old, name); await api.updateRulesCategory(old, name); state.txns.forEach(t => { if (t.category === old) t.category = name; }); state.rules.forEach(r => { if (r.category === old) r.category = name; }); if (state.filterCat === old) state.filterCat = name; }
-            c.name = name; c.icon = icon; toast('Saved');
+            c.name = name; c.icon = icon; if ('fixed' in patch) c.fixed = fixed; toast('Saved');
           }
           closeSheet(); render();
         } catch (e) { toast(friendlyError(e), true); }
