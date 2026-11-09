@@ -206,6 +206,10 @@ header.top{display:flex;align-items:center;justify-content:space-between;height:
 .prev-row .sub{font-size:12px;color:var(--muted);line-height:1.9}
 .drop{border:1.5px dashed var(--line);border-radius:16px;padding:26px 16px;text-align:center;color:var(--muted);margin-top:14px;display:block}
 .drop b{color:var(--text);display:block;margin-bottom:2px}
+.drop{cursor:pointer;transition:border-color .15s,background .15s}
+.drop.over{border-color:var(--accent);border-style:solid;background:var(--accent-soft);color:var(--text)}
+.drop .hint-desk{display:none}
+@media (hover:hover) and (pointer:fine){.drop .hint-desk{display:inline}}
 
 /* ---------- toast */
 .toast{position:fixed;left:50%;bottom:calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 86px);transform:translate(-50%,20px);background:var(--text);color:var(--bg);padding:11px 16px;border-radius:14px;font-size:14px;z-index:60;opacity:0;pointer-events:none;transition:.22s;max-width:calc(100vw - 36px);width:max-content}
@@ -853,20 +857,51 @@ function openImport() {
   let card = lastCard;
   openSheet('Import a statement', `
     <div class="field" style="margin-top:4px"><span>Which card?</span><div class="seg" id="cardSeg">${CARDS.map(c => `<button type="button" data-card="${c.id}" aria-pressed="${c.id === card}">${c.name}</button>`).join('')}</div></div>
-    <label class="drop" id="drop"><b>Choose a CSV or PDF statement</b>Download it from your card's website first.<input type="file" id="file" accept=".csv,.pdf,text/csv,application/pdf" class="hidden"></label>
+    <label class="drop" id="drop"><b>Choose a CSV or PDF statement</b><span class="hint-desk">or drag and drop it here. </span>Download it from your card's website first.<input type="file" id="file" accept=".csv,.pdf,text/csv,application/pdf" class="hidden"></label>
     <p class="muted" style="font-size:13px;margin-top:12px">Credit card statements only. Card payments are left out, and lines you've already imported are skipped, so overlapping statements are fine.</p>`, null, sh => {
     sh.querySelectorAll('[data-card]').forEach(b => b.onclick = () => { card = b.dataset.card; sh.querySelectorAll('[data-card]').forEach(x => x.setAttribute('aria-pressed', x === b)); });
-    $('#file', sh).onchange = async e => {
-      const f = e.target.files[0]; if (!f) return;
+    const drop = $('#drop', sh);
+    const pick = c => { card = c; sh.querySelectorAll('[data-card]').forEach(x => x.setAttribute('aria-pressed', x.dataset.card === c)); };
+    // Drag and drop a statement onto the box
+    let depth = 0;
+    drop.addEventListener('dragenter', e => { e.preventDefault(); depth++; drop.classList.add('over'); });
+    drop.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+    drop.addEventListener('dragleave', () => { if (--depth <= 0) { depth = 0; drop.classList.remove('over'); } });
+    drop.addEventListener('drop', e => {
+      e.preventDefault(); depth = 0; drop.classList.remove('over');
+      const files = [...(e.dataTransfer.files || [])];
+      if (!files.length) return;
+      if (files.length > 1) toast('Drop one statement at a time. Reading ' + files[0].name + '.');
+      handle(files[0]);
+    });
+    $('#file', sh).onchange = e => { const f = e.target.files[0]; if (f) handle(f); };
+    async function handle(f) {
+      if (!/\.(csv|pdf)$/i.test(f.name) && !/csv|pdf/i.test(f.type)) { toast("That isn't a CSV or PDF. Download the statement as CSV or PDF from your card's website.", true); return; }
+      let text = null;
+      if (!/\.pdf$/i.test(f.name) && f.type !== 'application/pdf') {
+        text = await f.text();
+        const guess = guessCard(f.name, text);
+        if (guess && guess !== card) { pick(guess); { const nm = CARDS.find(c => c.id === guess).name; toast(`This looks like ${/^[AEIOU]/.test(nm) ? 'an' : 'a'} ${nm} statement, so the card was switched for you.`); } }
+      }
       lastCard = card; try { localStorage.setItem('outflow.card', card); } catch (err) {}
       $('#drop', sh).innerHTML = '<b>Reading ' + esc(f.name) + '…</b>';
       try {
-        if (/\.pdf$/i.test(f.name) || f.type === 'application/pdf') await previewPdf(f, card);
-        else previewCsv(await f.text(), f.name, card, false);
-      } catch (err) { console.error(err); closeSheet(); toast(/pdf/i.test(String(err && err.message)) || /\.pdf$/i.test(f.name) ? "Couldn't read that PDF. Try the CSV download from your card's website instead." : friendlyError(err), true); }
-    };
+        if (text == null) await previewPdf(f, card);
+        else previewCsv(text, f.name, card, false);
+      } catch (err) { console.error(err); closeSheet(); toast(text == null ? "Couldn't read that PDF. Try the CSV download from your card's website instead." : friendlyError(err), true); }
+    }
   });
 }
+/** Recognises your cards' CSV downloads by their file name or column headers. */
+function guessCard(name, text) {
+  const head = text.slice(0, 400).toLowerCase(), n = name.toLowerCase();
+  if (/neo/.test(n) || /transaction date,posted date,status,description,amount/.test(head)) return 'neo';
+  if (/account type.*account number.*cad\$/.test(head)) return 'rbc';
+  if (/date processed/.test(head) || /^activity/.test(n)) return 'amex';
+  return null;
+}
+// Dropping a file anywhere else shouldn't make the browser leave the app to open it.
+['dragover', 'drop'].forEach(ev => window.addEventListener(ev, e => { if (!e.target.closest || !e.target.closest('#drop')) e.preventDefault(); }));
 function existingFingerprints() { return new Set(state.txns.map(t => t.fingerprint).filter(Boolean)); }
 function previewCsv(text, name, card, flip) {
   const r = C.csvToRaw(text, { flip });
