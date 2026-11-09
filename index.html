@@ -1,0 +1,981 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Outflow</title>
+<meta name="description" content="Where my money goes each month.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Outflow">
+<meta name="theme-color" content="#F5F5F2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0D0E10" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{
+  --bg:#F5F5F2; --surface:#FFFFFF; --surface-2:#EFEFEB; --line:rgba(17,19,22,.08);
+  --text:#121316; --muted:#6C7077; --faint:#A0A4AA;
+  --accent:#2F6B55; --accent-soft:rgba(47,107,85,.12); --accent-ink:#FFFFFF;
+  --good:#2F7D5B; --warn:#B26B12; --warn-soft:rgba(178,107,18,.11); --danger:#C2412D;
+  --bar-muted:#DCDCD6;
+  --radius:18px; --shadow:0 1px 2px rgba(17,19,22,.04),0 4px 18px rgba(17,19,22,.04);
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font-display:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --tabbar-h:64px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0D0E10; --surface:#17181B; --surface-2:#212226; --line:rgba(255,255,255,.08);
+    --text:#F1F2F3; --muted:#9A9EA6; --faint:#62666D;
+    --accent:#6FCB9F; --accent-soft:rgba(111,203,159,.14); --accent-ink:#0D0E10;
+    --good:#6FCB9F; --warn:#E3A44B; --warn-soft:rgba(227,164,75,.14); --danger:#F07A66;
+    --bar-muted:#2C2E33;
+    --shadow:none;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 var(--font);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+
+/* ---------- layout */
+.app{max-width:1040px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 8px) 18px calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 96px)}
+header.top{display:flex;align-items:center;justify-content:space-between;height:52px}
+.brand{font:600 19px/1 var(--font-display);letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
+.brand-mark{width:22px;height:22px;border-radius:7px;background:var(--accent);display:grid;place-items:center}
+.brand-mark svg{width:13px;height:13px;color:var(--accent-ink)}
+.icon-btn{width:40px;height:40px;border-radius:12px;border:0;background:transparent;display:grid;place-items:center;color:var(--text)}
+.icon-btn:active{background:var(--surface-2)}
+.icon-btn svg{width:22px;height:22px}
+.top-actions{display:flex;gap:4px;align-items:center}
+
+.month-nav{display:flex;align-items:center;justify-content:center;gap:6px;margin:6px 0 2px}
+.month-nav .label{font-weight:600;min-width:150px;text-align:center;font-size:15px}
+.month-nav .icon-btn{width:36px;height:36px;color:var(--muted)}
+.month-nav .icon-btn[disabled]{opacity:.3}
+
+/* ---------- tabs */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:saturate(1.6) blur(18px);-webkit-backdrop-filter:saturate(1.6) blur(18px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.tabbar-inner{max-width:520px;margin:0 auto;display:flex;height:var(--tabbar-h)}
+.tab{flex:1;border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-weight:500;color:var(--faint)}
+.tab svg{width:24px;height:24px}
+.tab[aria-selected="true"]{color:var(--text)}
+.fab{position:fixed;right:max(18px,calc(50vw - 520px + 18px));bottom:calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 16px);z-index:21;width:56px;height:56px;border-radius:50%;border:0;background:var(--text);color:var(--bg);display:grid;place-items:center;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+.fab svg{width:26px;height:26px}
+.fab:active{transform:scale(.96)}
+
+/* ---------- cards */
+.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-top:14px}
+.card h2{font:600 15px/1.2 var(--font);margin:0 0 12px;display:flex;justify-content:space-between;align-items:baseline}
+.card h2 .side{font-weight:500;color:var(--muted);font-size:13px}
+
+/* ---------- hero */
+.hero{padding:22px 4px 8px;text-align:center}
+.hero .eyebrow{color:var(--muted);font-size:14px;font-weight:500}
+.hero .big{font:600 56px/1.05 var(--font-display);letter-spacing:-.035em;margin:6px 0 10px}
+.hero .big .cents{font-size:.42em;letter-spacing:-.01em;vertical-align:.95em;margin-left:2px;color:var(--muted);font-weight:500}
+.hero .lines{display:flex;flex-direction:column;gap:6px;align-items:center}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;background:var(--surface);box-shadow:var(--shadow);font-size:14px;color:var(--muted)}
+.pill b{color:var(--text);font-weight:600}
+.pill.warn{background:var(--warn-soft);box-shadow:none;color:var(--warn)}
+.pill.warn b{color:var(--warn)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.pill.warn .dot{background:var(--warn)}
+
+/* ---------- rows */
+.row{display:flex;align-items:center;gap:12px;padding:10px 0;min-height:52px}
+.row + .row{border-top:1px solid var(--line)}
+.ic{flex:none;width:36px;height:36px;border-radius:11px;background:var(--surface-2);display:grid;place-items:center;font-size:17px}
+.row .main{flex:1;min-width:0}
+.row .title{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .sub{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .amt{font-weight:500;text-align:right;white-space:nowrap}
+.row .amt small{display:block;color:var(--muted);font-size:12px;font-weight:400}
+.amt.refund{color:var(--good)}
+.track{height:6px;border-radius:3px;background:var(--surface-2);margin-top:7px;overflow:hidden}
+.track i{display:block;height:100%;border-radius:3px;background:var(--accent)}
+.cat-row{width:100%;border:0;background:none;text-align:left;padding:10px 0}
+.cat-row + .cat-row{border-top:1px solid var(--line)}
+.cat-row .top{display:flex;align-items:center;gap:12px}
+.cat-row .main{flex:1;min-width:0}
+.cat-row .pct{color:var(--muted);font-size:13px;margin-left:6px;font-weight:400}
+
+/* ---------- chart */
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart text{font-family:var(--font);fill:var(--muted)}
+.chart .v{fill:var(--text);font-weight:600}
+
+/* ---------- activity */
+.toolbar{display:flex;gap:8px;margin-top:12px}
+.search{flex:1;min-width:0;position:relative}
+.search svg{position:absolute;left:12px;top:50%;width:18px;height:18px;transform:translateY(-50%);color:var(--faint)}
+.search input{width:100%;height:44px;border-radius:12px;border:0;background:var(--surface);box-shadow:var(--shadow);padding:0 12px 0 38px;outline:none}
+.select{height:44px;border-radius:12px;border:0;background:var(--surface);box-shadow:var(--shadow);padding:0 32px 0 12px;max-width:46%;flex:none;font-size:15px;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238A8E95' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:16px}
+.day{margin-top:18px}
+.day-h{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;font-weight:500;padding:0 4px 6px}
+.day .card{margin-top:0;padding:4px 16px}
+.tx{width:100%;border:0;background:none;text-align:left;padding:10px 0}
+.tx + .tx{border-top:1px solid var(--line)}
+.chip{display:inline-flex;align-items:center;gap:4px;border:0;background:var(--surface-2);border-radius:999px;padding:2px 9px;font-size:12px;color:var(--muted);max-width:100%}
+.chip:active{filter:brightness(.95)}
+.tag{font-size:12px;color:var(--muted)}
+.empty{text-align:center;padding:44px 18px;color:var(--muted)}
+.empty .big-ic{font-size:30px;margin-bottom:8px}
+.empty h3{color:var(--text);margin:0 0 6px;font-size:17px}
+
+/* ---------- buttons & fields */
+.btn{height:48px;border-radius:14px;border:0;padding:0 18px;font-weight:600;background:var(--surface-2);color:var(--text);display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn.primary{background:var(--text);color:var(--bg)}
+.btn.accent{background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;color:var(--accent);padding:0 8px;height:40px}
+.btn.danger{background:transparent;color:var(--danger)}
+.btn.block{width:100%}
+.btn[disabled]{opacity:.45}
+.btn svg{width:18px;height:18px}
+.field{display:block;margin-top:14px}
+.field > span{display:block;font-size:13px;color:var(--muted);margin:0 0 6px 2px;font-weight:500}
+.input{width:100%;height:48px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2);padding:0 14px;outline:none}
+.input:focus{border-color:var(--accent)}
+.amount-input{display:flex;align-items:center;justify-content:center;gap:4px;font:600 44px/1 var(--font-display);letter-spacing:-.03em;padding:8px 0 2px}
+.amount-input span{color:var(--muted)}
+.amount-input input{border:0;background:none;outline:none;width:2.8em;max-width:6em;text-align:left;font:inherit;letter-spacing:inherit;padding:0}
+.seg{display:flex;background:var(--surface-2);border-radius:12px;padding:3px;gap:2px}
+.seg button{flex:1;border:0;background:none;height:38px;border-radius:9px;font-size:14px;font-weight:500;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cat-opt{border:1px solid transparent;background:var(--surface-2);border-radius:12px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;font-weight:500;min-height:66px;text-align:center;line-height:1.15}
+.cat-opt .e{font-size:19px}
+.cat-opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--text)}
+.switch-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0}
+.switch-row .t{font-weight:500}
+.switch-row .d{font-size:13px;color:var(--muted)}
+.switch{position:relative;flex:none;width:51px;height:31px}
+.switch input{opacity:0;width:0;height:0;position:absolute}
+.switch i{position:absolute;inset:0;border-radius:99px;background:var(--bar-muted);transition:.2s}
+.switch i:after{content:"";position:absolute;width:27px;height:27px;left:2px;top:2px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.2);transition:.2s}
+.switch input:checked + i{background:var(--accent)}
+.switch input:checked + i:after{transform:translateX(20px)}
+.note{font-size:13px;color:var(--muted);background:var(--surface-2);border-radius:12px;padding:10px 12px;margin-top:12px}
+.note.ok{background:var(--accent-soft);color:var(--text)}
+.note.warn{background:var(--warn-soft);color:var(--text)}
+
+/* ---------- sheets */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.36);z-index:40;opacity:0;transition:opacity .2s}
+.scrim.show{opacity:1}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;background:var(--surface);border-radius:22px 22px 0 0;max-height:92vh;max-height:92dvh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .28s cubic-bezier(.2,.8,.2,1);padding-bottom:env(safe-area-inset-bottom)}
+.sheet.show{transform:none}
+.sheet-h{display:flex;align-items:center;justify-content:space-between;padding:10px 10px 6px 20px}
+.sheet-h h3{margin:0;font-size:17px}
+.sheet-b{overflow-y:auto;padding:4px 20px 22px;-webkit-overflow-scrolling:touch}
+.sheet-f{padding:12px 20px 16px;border-top:1px solid var(--line);display:flex;gap:10px}
+.grabber{width:36px;height:5px;border-radius:3px;background:var(--bar-muted);margin:8px auto 0}
+@media (min-width:720px){
+  .sheet{left:50%;right:auto;bottom:auto;top:50%;width:480px;border-radius:22px;transform:translate(-50%,-46%);opacity:0;transition:transform .22s,opacity .22s;max-height:86vh}
+  .sheet.show{transform:translate(-50%,-50%);opacity:1}
+  .grabber{display:none}
+}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+.stat{background:var(--surface-2);border-radius:14px;padding:12px 14px}
+.stat .k{font-size:12px;color:var(--muted);font-weight:500}
+.stat .v{font:600 22px/1.2 var(--font-display);letter-spacing:-.02em;margin-top:2px}
+.skips{margin:10px 0 0;padding:0;list-style:none;font-size:14px;color:var(--muted)}
+.skips li{padding:3px 0}
+.prev-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.prev-row input{width:18px;height:18px;accent-color:var(--accent);flex:none}
+.prev-row.off .main,.prev-row.off .amt{opacity:.4}
+.prev-row .sub .chip{margin-left:4px;padding:1px 8px}
+.chip[aria-pressed="true"]{background:var(--accent-soft);color:var(--text)}
+.amt s{color:var(--faint);font-size:12px;display:block}
+.splits{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.splits button{border:0;background:var(--surface-2);color:var(--text);border-radius:999px;height:32px;padding:0 12px;font-size:13px;font-weight:500}
+.splits button:active{background:var(--accent-soft)}
+.share-ed{margin:8px 0 2px;padding:10px;border-radius:12px;background:var(--surface-2);font-size:13px;color:var(--muted)}
+.share-ed .in{display:flex;align-items:center;gap:8px}
+.share-ed input{width:100px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--surface);padding:0 10px;font-size:15px;outline:none}
+.share-ed .splits button{background:var(--surface);height:30px}
+.prev-row .main{flex:1;min-width:0}
+.prev-row .title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.prev-row .sub{font-size:12px;color:var(--muted);line-height:1.9}
+.drop{border:1.5px dashed var(--line);border-radius:16px;padding:26px 16px;text-align:center;color:var(--muted);margin-top:14px;display:block}
+.drop b{color:var(--text);display:block;margin-bottom:2px}
+
+/* ---------- toast */
+.toast{position:fixed;left:50%;bottom:calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 86px);transform:translate(-50%,20px);background:var(--text);color:var(--bg);padding:11px 16px;border-radius:14px;font-size:14px;z-index:60;opacity:0;pointer-events:none;transition:.22s;max-width:calc(100vw - 36px);width:max-content}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast.err{background:var(--danger);color:#fff}
+
+/* ---------- auth */
+.auth{max-width:380px;margin:12vh auto 0;padding:0 22px}
+.auth .brand{font-size:28px;justify-content:center;margin-bottom:6px}
+.auth .brand-mark{width:32px;height:32px;border-radius:10px}
+.auth .brand-mark svg{width:19px;height:19px}
+.auth p.lead{text-align:center;color:var(--muted);margin:0 0 26px}
+.auth .err{color:var(--danger);font-size:14px;margin-top:12px;min-height:20px}
+.linkish{background:none;border:0;color:var(--accent);font-weight:500;padding:8px}
+
+/* ---------- more */
+.list-btn{width:100%;border:0;background:none;display:flex;align-items:center;gap:12px;padding:12px 0;text-align:left}
+.list-btn + .list-btn{border-top:1px solid var(--line)}
+.list-btn .main{flex:1;min-width:0}
+.list-btn .chev{color:var(--faint);width:18px;height:18px}
+
+/* ---------- desktop */
+@media (min-width:900px){
+  .app{padding-bottom:60px}
+  .tabbar{position:static;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;border:0;padding:0}
+  .tabbar-inner{height:auto;background:var(--surface-2);border-radius:12px;padding:3px;gap:2px;max-width:none}
+  .tab{flex-direction:row;font-size:14px;padding:0 14px;height:34px;border-radius:9px;gap:6px}
+  .tab svg{width:17px;height:17px}
+  .tab[aria-selected="true"]{background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .fab{bottom:32px;right:32px}
+  .toast{bottom:100px}
+  .month-grid{display:grid;grid-template-columns:1.05fr 1fr;gap:18px;align-items:start}
+  .month-grid .card:first-child{margin-top:14px}
+  .hero{padding-top:34px}
+  .hero .big{font-size:68px}
+  .activity-wrap{max-width:720px;margin:0 auto}
+  .more-wrap{max-width:620px;margin:0 auto}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="config.js"></script>
+<script src="outflow-core.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+'use strict';
+const C = window.OutflowCore;
+const PDFJS_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs';
+const PDFJS_WORKER = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
+const CARDS = [{ id: 'amex', name: 'Amex' }, { id: 'rbc', name: 'RBC Visa' }, { id: 'neo', name: 'Neo' }];
+// Cards you often use to buy things for other people: the import suggests marking purchases that were paid off right away.
+const SHARED_CARDS = ['neo'];
+
+// ------------------------------------------------------------------ icons
+const I = {
+  logo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>',
+  left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
+  right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  upload: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5M5 14v4a2 2 0 002 2h10a2 2 0 002-2v-4"/></svg>',
+  close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+  month: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M5 20V12M10 20V6M15 20v-9M20 20V9"/></svg>',
+  list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>',
+  more: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01" stroke-width="2.6"/></svg>',
+  chev: '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>'
+};
+
+// ------------------------------------------------------------------ helpers
+const $ = (sel, el = document) => el.querySelector(sel);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = c => C.fmt(c);
+const fmt0 = c => C.fmt(c, { noCents: true });
+function localToday() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+function monthName(mk, short) { const [y, m] = mk.split('-').map(Number); return new Date(y, m - 1, 1).toLocaleDateString('en-CA', short ? { month: 'short' } : { month: 'long', year: 'numeric' }); }
+function monthOnly(mk) { const [y, m] = mk.split('-').map(Number); return new Date(y, m - 1, 1).toLocaleDateString('en-CA', { month: 'long' }); }
+function dayLabel(d) {
+  const t = localToday(); const y = new Date(Date.now() - 864e5);
+  const yd = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, '0')}-${String(y.getDate()).padStart(2, '0')}`;
+  if (d === t) return 'Today'; if (d === yd) return 'Yesterday';
+  const [Y, M, D] = d.split('-').map(Number);
+  return new Date(Y, M - 1, D).toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric', ...(Y !== new Date().getFullYear() ? { year: 'numeric' } : {}) });
+}
+function parseMoneyInput(v) { const c = C.parseAmount(String(v || '').trim()); return c; }
+function centsToInput(c) { return c == null ? '' : (c / 100).toFixed(2); }
+let toastTimer;
+function toast(msg, isErr) {
+  const t = $('#toast'); t.textContent = msg; t.className = 'toast show' + (isErr ? ' err' : '');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.className = 'toast' + (isErr ? ' err' : ''), isErr ? 5200 : 2600);
+}
+function friendlyError(e) {
+  const m = String((e && (e.message || e.error_description)) || e || '');
+  if (/Invalid login credentials/i.test(m)) return "That email and password don't match. Check them and try again.";
+  if (/Email not confirmed/i.test(m)) return 'Please confirm your email first. Check your inbox for the link from Supabase.';
+  if (/signups? (are )?not allowed|Signups not allowed/i.test(m)) return 'New sign-ups are turned off. Sign in with your existing account.';
+  if (/Password should be/i.test(m)) return 'Use a password with at least 6 characters.';
+  if (/already registered/i.test(m)) return 'That email already has an account. Sign in instead.';
+  if (/Failed to fetch|NetworkError|network/i.test(m)) return "Can't reach the server. Check your internet connection and try again.";
+  if (/relation .* does not exist|schema cache/i.test(m)) return "The database isn't set up yet. Run setup.sql in Supabase (README step 2).";
+  if (/JWT|session/i.test(m)) return 'You were signed out. Please sign in again.';
+  return 'Something went wrong: ' + m + ' Try again in a moment.';
+}
+
+// ------------------------------------------------------------------ data layer
+// Two backends with the same shape: Supabase (real) and Demo (in memory, for trying the app).
+const toCents = v => v == null ? null : Math.round(Number(v) * 100);
+const toNum = c => c == null ? null : Math.round(c) / 100;
+function rowToTx(r) {
+  return { id: r.id, date: r.date, description: r.description, merchant: r.merchant, cents: toCents(r.amount), original_cents: toCents(r.original_amount),
+    my_share_cents: toCents(r.my_share), category: r.category, kind: r.kind, source: r.source, note: r.note, fingerprint: r.fingerprint, deleted: !!r.deleted };
+}
+function txToRow(t) {
+  const r = {};
+  if ('date' in t) r.date = t.date; if ('description' in t) r.description = t.description; if ('merchant' in t) r.merchant = t.merchant;
+  if ('cents' in t) r.amount = toNum(t.cents); if ('original_cents' in t) r.original_amount = toNum(t.original_cents);
+  if ('my_share_cents' in t) r.my_share = toNum(t.my_share_cents);
+  for (const k of ['category', 'kind', 'source', 'note', 'fingerprint', 'deleted']) if (k in t) r[k] = t[k];
+  return r;
+}
+function planFromRow(p) { return { id: p.id, name: p.name, monthly_cents: toCents(p.monthly_amount), start_month: p.start_month, total_months: p.total_months }; }
+
+const SupaBackend = (client) => ({
+  async session() { const { data } = await client.auth.getSession(); return data.session; },
+  onAuth(cb) { client.auth.onAuthStateChange((_e, s) => cb(s)); },
+  async signIn(email, password) { const { error } = await client.auth.signInWithPassword({ email, password }); if (error) throw error; },
+  async signUp(email, password) { const { data, error } = await client.auth.signUp({ email, password }); if (error) throw error; return data; },
+  async signOut() { await client.auth.signOut(); },
+  async loadAll() {
+    const all = [];
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await client.from('transactions').select('*').order('date', { ascending: false }).range(from, from + 999);
+      if (error) throw error; all.push(...data); if (data.length < 1000) break;
+    }
+    const [cats, rules, plans] = await Promise.all([
+      client.from('categories').select('*').order('sort'), client.from('merchant_rules').select('*'), client.from('instalment_plans').select('*').order('created_at')
+    ]);
+    for (const r of [cats, rules, plans]) if (r.error) throw r.error;
+    return { txns: all.map(rowToTx), cats: cats.data, rules: rules.data, plans: plans.data.map(planFromRow) };
+  },
+  async insertCats(rows) { const uid = state.user.id; const { data, error } = await client.from('categories').upsert(rows.map(r => ({ ...r, user_id: uid })), { onConflict: 'user_id,name', ignoreDuplicates: true }).select(); if (error) throw error; return data; },
+  async updateCat(id, patch) { const { error } = await client.from('categories').update(patch).eq('id', id); if (error) throw error; },
+  async deleteCat(id) { const { error } = await client.from('categories').delete().eq('id', id); if (error) throw error; },
+  async insertTx(list) {
+    const uid = state.user.id, out = [];
+    for (let i = 0; i < list.length; i += 400) {
+      const chunk = list.slice(i, i + 400).map(t => ({ ...txToRow(t), user_id: uid }));
+      const withFp = chunk.filter(r => r.fingerprint), noFp = chunk.filter(r => !r.fingerprint);
+      if (withFp.length) { const { data, error } = await client.from('transactions').upsert(withFp, { onConflict: 'user_id,fingerprint', ignoreDuplicates: true }).select(); if (error) throw error; out.push(...data); }
+      if (noFp.length) { const { data, error } = await client.from('transactions').insert(noFp).select(); if (error) throw error; out.push(...data); }
+    }
+    return out.map(rowToTx);
+  },
+  async updateTx(ids, patch) { const { error } = await client.from('transactions').update(txToRow(patch)).in('id', ids); if (error) throw error; },
+  async updateTxCategory(from, to) { const { error } = await client.from('transactions').update({ category: to }).eq('category', from); if (error) throw error; },
+  async upsertRule(merchant_key, category) { const { data, error } = await client.from('merchant_rules').upsert({ user_id: state.user.id, merchant_key, category }, { onConflict: 'user_id,merchant_key' }).select().single(); if (error) throw error; return data; },
+  async deleteRule(id) { const { error } = await client.from('merchant_rules').delete().eq('id', id); if (error) throw error; },
+  async updateRulesCategory(from, to) { const { error } = await client.from('merchant_rules').update({ category: to }).eq('category', from); if (error) throw error; },
+  async savePlan(p) {
+    const row = { name: p.name, monthly_amount: toNum(p.monthly_cents), start_month: p.start_month, total_months: p.total_months };
+    const q = p.id ? client.from('instalment_plans').update(row).eq('id', p.id) : client.from('instalment_plans').insert({ ...row, user_id: state.user.id });
+    const { data, error } = await q.select().single(); if (error) throw error; return planFromRow(data);
+  },
+  async deletePlan(id) { const { error } = await client.from('instalment_plans').delete().eq('id', id); if (error) throw error; }
+});
+
+const DemoBackend = (empty) => {
+  const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2));
+  const db = { txns: [], cats: [], rules: [], plans: [] };
+  // A believable sample: a few months of student-life spending.
+  const today = localToday(), mk = C.monthKey(today), shops = [
+    ['SAFEWAY #8913 CALGARY   CALGARY', 38, 92], ['TIM HORTONS #6983       CALGARY', 3, 9], ['WINNERS 467             CALGARY', 14, 60], ['SKIPTHEDISHES           WINNIPEG', 22, 38],
+    ['SHELL C00592            CALGARY', 35, 60], ['AMAZON.CA               866-216-1072', 15, 80], ['FRESHCO #9623 CALGARY   CALGARY', 25, 70], ['KFC 1793                CALGARY', 12, 24],
+    ['CHATIME THE CORE 001    CALGARY', 6, 9], ['CINEPLEX CROSSIRON      ROCKY VIEW', 16, 30], ['SHOPPERS DRUG MART #035 CALGARY', 9, 40]];
+  let seed = 7; const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  for (let back = empty ? -1 : 5; back >= 0; back--) {
+    const m = C.addMonths(mk, -back), dim = C.daysInMonth(m), last = back === 0 ? +today.slice(8, 10) : dim;
+    const add = (day, desc, cents) => { if (day > last) return; const raw = [{ date: `${m}-${String(day).padStart(2, '0')}`, description: desc, cents }]; const p = C.buildImport(raw, { source: 'amex' }); for (const it of p.items) db.txns.push({ id: uid(), ...it, my_share_cents: null, deleted: false }); };
+    add(1, 'CHEXY*RENT              CALGARY', 81400); add(3, 'TELUS MOBILITY          EDMONTON', 7600); add(5, 'SPOTIFY                 STOCKHOLM', 1299); add(12, 'CLAUDE.AI SUBSCRIPTION  SAN FRANCISCO', 2800); add(27, 'MONTHLY INSTALLMENT FEE', 2677);
+    const n = 16 + Math.floor(rnd() * 10);
+    for (let i = 0; i < n; i++) { const s = shops[Math.floor(rnd() * shops.length)]; add(1 + Math.floor(rnd() * dim), s[0], Math.round((s[1] + rnd() * (s[2] - s[1])) * 100)); }
+    add(15, 'WINNERS 467             CALGARY', -2499);
+  }
+  const shared = db.txns.find(t => t.merchant === 'Safeway'); if (shared) { shared.my_share_cents = Math.round(shared.cents / 2); }
+  if (!empty) db.plans.push({ id: uid(), name: 'Laptop (Amex plan)', monthly_cents: 23731, start_month: C.addMonths(mk, -3), total_months: 12 });
+  const ok = x => Promise.resolve(JSON.parse(JSON.stringify(x)));
+  return {
+    demo: true,
+    async session() { return { user: { id: 'demo', email: 'demo@outflow' } }; }, onAuth() {}, async signIn() {}, async signUp() {}, async signOut() { location.href = location.pathname; },
+    async loadAll() { return ok(db); },
+    async insertCats(rows) { const out = rows.filter(r => !db.cats.some(c => c.name === r.name)).map(r => ({ id: uid(), ...r })); db.cats.push(...out); return ok(out); },
+    async updateCat(id, patch) { Object.assign(db.cats.find(c => c.id === id), patch); },
+    async deleteCat(id) { db.cats = db.cats.filter(c => c.id !== id); },
+    async insertTx(list) { const out = []; for (const t of list) { if (t.fingerprint && db.txns.some(x => x.fingerprint === t.fingerprint)) continue; const r = { id: uid(), my_share_cents: null, deleted: false, ...t }; db.txns.push(r); out.push(r); } return ok(out); },
+    async updateTx(ids, patch) { for (const t of db.txns) if (ids.includes(t.id)) Object.assign(t, patch); },
+    async updateTxCategory(from, to) { for (const t of db.txns) if (t.category === from) t.category = to; },
+    async upsertRule(merchant_key, category) { let r = db.rules.find(x => x.merchant_key === merchant_key); if (r) r.category = category; else db.rules.push(r = { id: uid(), merchant_key, category }); return ok(r); },
+    async deleteRule(id) { db.rules = db.rules.filter(r => r.id !== id); },
+    async updateRulesCategory(from, to) { for (const r of db.rules) if (r.category === from) r.category = to; },
+    async savePlan(p) { if (p.id) { Object.assign(db.plans.find(x => x.id === p.id), p); return ok(p); } const n = { ...p, id: uid() }; db.plans.push(n); return ok(n); },
+    async deletePlan(id) { db.plans = db.plans.filter(p => p.id !== id); }
+  };
+};
+
+// ------------------------------------------------------------------ state
+const state = { user: null, txns: [], cats: [], rules: [], plans: [], month: C.monthKey(localToday()), tab: 'month', search: '', filterCat: '', loaded: false };
+let api;
+const live = () => state.txns.filter(t => !t.deleted);
+const catNames = () => state.cats.map(c => c.name);
+const catOf = name => state.cats.find(c => c.name === name) || { name: name || 'Other', icon: '•' };
+
+// ------------------------------------------------------------------ boot
+async function boot() {
+  const cfg = window.OUTFLOW_CONFIG || {};
+  const params = new URLSearchParams(location.search);
+  const configured = cfg.SUPABASE_URL && !/YOUR-PROJECT/.test(cfg.SUPABASE_URL) && cfg.SUPABASE_ANON_KEY && !/YOUR-/.test(cfg.SUPABASE_ANON_KEY);
+  if (params.has('demo')) api = DemoBackend(params.get('demo') === 'empty');
+  else if (!configured) return renderNotConfigured();
+  else if (!window.supabase) return renderFatal("Couldn't load the login library. Check your internet connection and reload the page.");
+  else {
+    api = SupaBackend(window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } }));
+    api.onAuth(s => { const was = state.user && state.user.id; state.user = s ? s.user : null; if ((s && s.user.id) !== was) start(); });
+  }
+  const s = await api.session();
+  state.user = s ? s.user : null;
+  start();
+}
+async function start() {
+  if (!state.user) return renderAuth();
+  try {
+    $('#root').innerHTML = '<div class="empty" style="margin-top:30vh">Loading…</div>';
+    const d = await api.loadAll();
+    Object.assign(state, d);
+    if (!state.cats.length) {
+      const rows = C.DEFAULT_CATEGORIES.map((c, i) => ({ name: c.name, icon: c.icon, color: c.color, sort: i }));
+      state.cats = (await api.insertCats(rows)).sort((a, b) => a.sort - b.sort);
+    }
+    state.loaded = true;
+    render();
+  } catch (e) { renderFatal(friendlyError(e)); }
+}
+
+// ------------------------------------------------------------------ screens
+function renderNotConfigured() {
+  $('#root').innerHTML = `<div class="auth">
+    <div class="brand"><span class="brand-mark">${I.logo}</span>Outflow</div>
+    <p class="lead">Almost ready.</p>
+    <div class="card"><b>Outflow isn't connected to your database yet.</b>
+      <p class="muted" style="margin:8px 0 0">Open <code>config.js</code> and paste in your Supabase Project URL and publishable (anon) key. The README walks you through it, step 3.</p></div>
+    <button class="btn block" style="margin-top:14px" onclick="location.search='?demo'">Look around with sample data</button>
+  </div>`;
+}
+function renderFatal(msg) {
+  $('#root').innerHTML = `<div class="auth"><div class="brand"><span class="brand-mark">${I.logo}</span>Outflow</div>
+    <div class="card" style="margin-top:24px">${esc(msg)}</div><button class="btn block" style="margin-top:14px" onclick="location.reload()">Try again</button></div>`;
+}
+function renderAuth(mode) {
+  mode = mode || 'in';
+  $('#root').innerHTML = `<form class="auth" id="authForm" novalidate>
+    <div class="brand"><span class="brand-mark">${I.logo}</span>Outflow</div>
+    <p class="lead">${mode === 'in' ? 'See where your money goes.' : 'Create your account.'}</p>
+    <label class="field"><span>Email</span><input class="input" type="email" name="email" autocomplete="email" required></label>
+    <label class="field"><span>Password</span><input class="input" type="password" name="password" autocomplete="${mode === 'in' ? 'current-password' : 'new-password'}" required minlength="6"></label>
+    <button class="btn primary block" style="margin-top:20px" type="submit">${mode === 'in' ? 'Sign in' : 'Create account'}</button>
+    <div class="err" id="authErr"></div>
+    <div style="text-align:center"><button type="button" class="linkish" id="authSwap">${mode === 'in' ? 'First time here? Create an account' : 'Already have an account? Sign in'}</button></div>
+  </form>`;
+  $('#authSwap').onclick = () => renderAuth(mode === 'in' ? 'up' : 'in');
+  $('#authForm').onsubmit = async e => {
+    e.preventDefault();
+    const f = e.target, email = f.email.value.trim(), pw = f.password.value, err = $('#authErr');
+    if (!email || !pw) { err.textContent = 'Enter your email and password.'; return; }
+    const btn = f.querySelector('button[type=submit]'); btn.disabled = true; err.textContent = '';
+    try {
+      if (mode === 'in') await api.signIn(email, pw);
+      else { const d = await api.signUp(email, pw); if (!d.session) { err.textContent = ''; f.innerHTML = `<div class="brand"><span class="brand-mark">${I.logo}</span>Outflow</div><div class="card" style="margin-top:24px">Check your email and tap the confirmation link, then come back and sign in.</div><button type="button" class="btn block" style="margin-top:14px" onclick="location.reload()">Back to sign in</button>`; return; } }
+    } catch (ex) { err.textContent = friendlyError(ex); btn.disabled = false; }
+  };
+}
+
+function render() {
+  if (!state.loaded) return;
+  const cur = C.monthKey(localToday());
+  const showMonthNav = state.tab !== 'more' && !(state.tab === 'activity' && state.search.trim());
+  $('#root').innerHTML = `<div class="app">
+    <header class="top">
+      <div class="brand"><span class="brand-mark">${I.logo}</span>Outflow${api.demo ? ' <span class="tag" style="margin-left:4px">sample data</span>' : ''}</div>
+      <nav class="tabbar" aria-label="Sections"><div class="tabbar-inner" role="tablist">
+        ${[['month', 'Month', I.month], ['activity', 'Activity', I.list], ['more', 'More', I.more]].map(([id, label, ic]) =>
+          `<button class="tab" role="tab" data-tab="${id}" aria-selected="${state.tab === id}">${ic}<span>${label}</span></button>`).join('')}
+      </div></nav>
+      <div class="top-actions"><button class="icon-btn" id="importBtn" aria-label="Import a statement" title="Import a statement">${I.upload}</button></div>
+    </header>
+    ${showMonthNav ? `<div class="month-nav">
+      <button class="icon-btn" id="prevM" aria-label="Previous month">${I.left}</button>
+      <div class="label">${esc(monthName(state.month))}</div>
+      <button class="icon-btn" id="nextM" aria-label="Next month" ${state.month >= cur ? 'disabled' : ''}>${I.right}</button>
+    </div>` : ''}
+    <main id="view"></main>
+  </div>
+  <button class="fab" id="fab" aria-label="Add an expense">${I.plus}</button>`;
+  document.querySelectorAll('.tab').forEach(b => b.onclick = () => { state.tab = b.dataset.tab; render(); scrollTo(0, 0); });
+  $('#importBtn').onclick = openImport;
+  $('#fab').onclick = () => openTxSheet(null);
+  if (showMonthNav) {
+    $('#prevM').onclick = () => { state.month = C.addMonths(state.month, -1); render(); };
+    $('#nextM').onclick = () => { if (state.month < cur) { state.month = C.addMonths(state.month, 1); render(); } };
+  }
+  ({ month: renderMonth, activity: renderActivity, more: renderMore })[state.tab]($('#view'));
+}
+
+// ---------- Month
+function bigMoney(c) {
+  const s = fmt(Math.abs(c)); const [w, d] = s.split('.');
+  return `${c < 0 ? '−' : ''}${esc(w)}<span class="cents">.${d}</span>`;
+}
+function renderMonth(el) {
+  const today = localToday(), txns = live();
+  const s = C.monthSummary(txns, state.month, today);
+  const mOnly = monthOnly(state.month);
+  let lines = '';
+  if (s.isCurrent) {
+    const dim = s.daysInMonth;
+    if (s.projection != null && s.count) lines += `<div class="pill"><span class="dot"></span>On pace for about <b class="num">${fmt0(s.projection)}</b> by ${esc(mOnly.slice(0, 3))} ${dim}</div>`;
+    if (s.lastMonthSamePoint > 0 && s.count) {
+      const diff = s.total - s.lastMonthSamePoint, more = diff > 0, faster = diff > s.lastMonthSamePoint * 0.15;
+      lines += `<div class="pill ${more && faster ? 'warn' : ''}">${more && faster ? '<span class="dot"></span>' : ''}<b class="num">${fmt0(Math.abs(diff))}</b> ${more ? 'more' : 'less'} than this point last month</div>`;
+    }
+  } else if (!s.isFuture && s.lastMonthTotal > 0 && s.count) {
+    const diff = s.total - s.lastMonthTotal;
+    lines += `<div class="pill"><b class="num">${fmt0(Math.abs(diff))}</b> ${diff > 0 ? 'more' : 'less'} than ${esc(monthOnly(C.addMonths(state.month, -1)))}</div>`;
+  }
+  const hero = `<section class="hero">
+    <div class="eyebrow">${s.isCurrent ? 'Spent so far in ' + esc(mOnly) : 'Spent in ' + esc(mOnly)}</div>
+    <div class="big num" aria-label="${esc(fmt(s.total))}">${bigMoney(s.total)}</div>
+    <div class="lines">${lines}</div>
+  </section>`;
+
+  if (!s.count) {
+    el.innerHTML = hero + `<div class="card empty"><div class="big-ic">🧾</div><h3>${s.isFuture ? "This month hasn't started yet" : 'Nothing here for ' + esc(mOnly)}</h3>
+      ${s.isFuture ? '' : `<p style="margin:0 0 16px">Import a card statement or add an expense to get started.</p>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn primary" id="eImp">${I.upload} Import statement</button><button class="btn" id="eAdd">Add by hand</button></div>`}</div>`
+      + chartCard(txns);
+    const a = $('#eImp'); if (a) a.onclick = openImport; const b = $('#eAdd'); if (b) b.onclick = () => openTxSheet(null);
+    bindChart(el); return;
+  }
+  const max = Math.max(1, ...s.categories.map(c => c.cents));
+  const pos = s.categories.filter(c => c.cents > 0).reduce((a, c) => a + c.cents, 0) || 1;
+  const cats = s.categories.map(c => { const cat = catOf(c.name); return `<button class="cat-row" data-cat="${esc(c.name)}">
+      <div class="top"><span class="ic">${esc(cat.icon || '•')}</span><div class="main"><div class="title" style="font-weight:500">${esc(c.name)}${c.cents > 0 ? `<span class="pct num">${Math.round(c.cents / pos * 100)}%</span>` : ''}</div>
+      <div class="track"><i style="width:${Math.max(0, c.cents) / max * 100}%"></i></div></div>
+      <div class="amt num ${c.cents < 0 ? 'refund' : ''}">${fmt(c.cents)}</div></div></button>`; }).join('');
+  const shops = s.topShops.map((x, i) => `<div class="row"><span class="ic num" style="font-size:14px;font-weight:600;color:var(--muted)">${i + 1}</span>
+      <div class="main"><div class="title">${esc(x.name)}</div><div class="sub">${x.count} ${x.count === 1 ? 'purchase' : 'purchases'}</div></div><div class="amt num">${fmt(x.cents)}</div></div>`).join('');
+  el.innerHTML = hero + `<div class="month-grid">
+    <div><section class="card"><h2>Where it went <span class="side">${s.count} ${s.count === 1 ? 'line' : 'lines'}</span></h2>${cats}</section></div>
+    <div>${chartCard(txns)}
+      ${shops ? `<section class="card"><h2>Top shops</h2>${shops}</section>` : ''}</div>
+  </div>`;
+  el.querySelectorAll('.cat-row').forEach(b => b.onclick = () => { state.filterCat = b.dataset.cat; state.search = ''; state.tab = 'activity'; render(); scrollTo(0, 0); });
+  bindChart(el);
+}
+function chartCard(txns) {
+  const data = C.lastMonths(txns, state.month, 6);
+  const W = 340, H = 168, top = 24, bottom = 26, gap = 14, bw = (W - gap * 5) / 6;
+  const max = Math.max(1, ...data.map(d => d.cents));
+  const short = c => c >= 100000 ? '$' + (c / 100000).toFixed(c >= 1000000 ? 0 : 1).replace(/\.0$/, '') + 'k' : '$' + Math.round(c / 100);
+  const bars = data.map((d, i) => {
+    const h = d.cents > 0 ? Math.max(3, (H - top - bottom) * d.cents / max) : 0;
+    const x = i * (bw + gap), y = H - bottom - h, sel = d.month === state.month;
+    return `<g class="bar" data-m="${d.month}" style="cursor:pointer">
+      <rect x="${x}" y="${top - 18}" width="${bw}" height="${H - top}" fill="transparent"/>
+      ${h ? `<rect x="${x}" y="${y}" width="${bw}" height="${h}" rx="6" fill="${sel ? 'var(--accent)' : 'var(--bar-muted)'}"/>` : `<rect x="${x}" y="${H - bottom - 2}" width="${bw}" height="2" rx="1" fill="var(--bar-muted)"/>`}
+      <text x="${x + bw / 2}" y="${(h ? y : H - bottom - 2) - 7}" text-anchor="middle" font-size="12" class="${sel ? 'v' : ''}">${d.cents ? short(d.cents) : '—'}</text>
+      <text x="${x + bw / 2}" y="${H - 6}" text-anchor="middle" font-size="12" ${sel ? 'class="v"' : ''}>${esc(monthName(d.month, true))}</text></g>`;
+  }).join('');
+  return `<section class="card chart"><h2>Last 6 months</h2><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Spending for the last six months">${bars}</svg></section>`;
+}
+function bindChart(el) { el.querySelectorAll('.bar').forEach(g => g.onclick = () => { state.month = g.dataset.m; render(); }); }
+
+// ---------- Activity
+function renderActivity(el) {
+  const q = state.search.trim().toLowerCase();
+  let list = live();
+  if (q) list = list.filter(t => (t.merchant || '').toLowerCase().includes(q) || (t.description || '').toLowerCase().includes(q) || (t.note || '').toLowerCase().includes(q) || String(toNum(t.cents)).includes(q));
+  else list = list.filter(t => C.monthKey(t.date) === state.month);
+  if (state.filterCat) list = list.filter(t => t.category === state.filterCat);
+  list.sort((a, b) => a.date < b.date ? 1 : a.date > b.date ? -1 : 0);
+  const groups = []; for (const t of list) { const g = groups[groups.length - 1]; if (g && g.date === t.date) g.items.push(t); else groups.push({ date: t.date, items: [t] }); }
+  const total = list.reduce((a, t) => a + C.counted(t), 0);
+  const options = ['<option value="">All categories</option>'].concat(state.cats.map(c => `<option value="${esc(c.name)}" ${state.filterCat === c.name ? 'selected' : ''}>${esc(c.name)}</option>`)).join('');
+  el.innerHTML = `<div class="activity-wrap">
+    <div class="toolbar">
+      <label class="search">${I.search}<input type="search" id="q" placeholder="Search" value="${esc(state.search)}" autocomplete="off" enterkeyhint="search"></label>
+      <select class="select" id="fc" aria-label="Category">${options}</select>
+    </div>
+    ${(q || state.filterCat) && list.length ? `<div class="muted num" style="font-size:13px;margin:12px 4px 0">${list.length} ${list.length === 1 ? 'line' : 'lines'} · ${fmt(total)}${q ? '' : ' in ' + esc(monthOnly(state.month))}</div>` : ''}
+    <div id="days">${groups.length ? groups.map(g => `<section class="day">
+        <div class="day-h"><span>${esc(dayLabel(g.date))}</span><span class="num">${fmt(g.items.reduce((a, t) => a + C.counted(t), 0))}</span></div>
+        <div class="card">${g.items.map(txRow).join('')}</div></section>`).join('')
+      : `<div class="card empty" style="margin-top:18px"><div class="big-ic">🔍</div><h3>${q ? 'No matches' : 'No lines here'}</h3><p style="margin:0">${q ? 'Try a shorter word, or clear the search.' : state.filterCat ? 'Nothing in ' + esc(state.filterCat) + ' this month. Pick "All categories" to see everything.' : 'Import a statement or tap + to add an expense.'}</p></div>`}</div>
+  </div>`;
+  const qi = $('#q');
+  qi.oninput = () => { state.search = qi.value; const pos = qi.selectionStart; render(); const n = $('#q'); n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} };
+  $('#fc').onchange = e => { state.filterCat = e.target.value; render(); };
+  el.querySelectorAll('.tx').forEach(b => b.onclick = e => {
+    const t = state.txns.find(x => x.id === b.dataset.id);
+    if (e.target.closest('.chip')) openCatPicker(t); else openTxSheet(t);
+  });
+}
+function txRow(t) {
+  const cat = catOf(t.category), shared = t.my_share_cents != null, c = C.counted(t);
+  const subBits = [];
+  if (shared) subBits.push(t.my_share_cents === 0 ? 'for someone else' : 'my share');
+  if (t.kind === 'chexy_fee') subBits.push('rent fee');
+  if (t.source && t.source !== 'manual') subBits.push((CARDS.find(x => x.id === t.source) || { name: t.source }).name);
+  if (state.search.trim()) subBits.unshift(C.monthKey(t.date) !== state.month ? '' : '');
+  return `<div class="tx" role="button" tabindex="0" data-id="${t.id}"><div class="row" style="padding:0;min-height:48px">
+    <span class="ic">${esc(cat.icon || '•')}</span>
+    <div class="main"><div class="title">${esc(t.merchant || t.description)}</div>
+      <div class="sub"><button class="chip" aria-label="Change category">${esc(t.category)}</button>${subBits.filter(Boolean).length ? ' <span class="tag">· ' + esc(subBits.filter(Boolean).join(' · ')) + '</span>' : ''}</div></div>
+    <div class="amt num ${c < 0 ? 'refund' : ''}">${fmt(c)}${shared ? `<small>of ${fmt(t.cents)}</small>` : ''}</div></div></div>`;
+}
+
+// ---------- More
+function renderMore(el) {
+  const cur = C.monthKey(localToday());
+  const plans = state.plans.map(p => { const left = C.planMonthsLeft(p, cur); return `<button class="list-btn" data-plan="${p.id}"><span class="ic">🗓️</span>
+    <div class="main"><div class="title" style="font-weight:500">${esc(p.name)}</div><div class="sub muted" style="font-size:13px">${left ? `${left} ${left === 1 ? 'month' : 'months'} left · ${fmt(p.monthly_cents * left)} to go` : 'Paid off'}</div></div>
+    <div class="amt num">${fmt(p.monthly_cents)}<small class="muted" style="display:block;font-size:12px;text-align:right">a month</small></div>${I.chev}</button>`; }).join('');
+  const monthlyLeft = state.plans.filter(p => C.planActive(p, cur)).reduce((a, p) => a + p.monthly_cents, 0);
+  el.innerHTML = `<div class="more-wrap">
+    <section class="card"><h2>Import a statement</h2>
+      <p class="muted" style="margin:0 0 12px;font-size:14px">CSV or PDF from Amex, RBC Visa or Neo. Re-importing the same lines is safe; nothing is added twice.</p>
+      <button class="btn primary block" id="mImp">${I.upload} Choose a file</button></section>
+    <section class="card"><h2>Instalment plans ${monthlyLeft ? `<span class="side num">${fmt(monthlyLeft)} a month</span>` : ''}</h2>
+      ${plans || '<p class="muted" style="margin:0;font-size:14px">None yet.</p>'}
+      <p class="muted" style="font-size:13px;margin:10px 0 0">For keeping track only. Plan purchases already counted in full the month you bought them, and the monthly fee counts under Fees.</p>
+      <button class="btn ghost" id="addPlan" style="margin-top:6px">${I.plus} Add a plan</button></section>
+    <section class="card"><h2>Categories</h2>
+      ${state.cats.map(c => `<button class="list-btn" data-cat="${c.id}"><span class="ic">${esc(c.icon || '•')}</span><div class="main">${esc(c.name)}</div>${I.chev}</button>`).join('')}
+      <button class="btn ghost" id="addCat" style="margin-top:6px">${I.plus} New category</button></section>
+    <section class="card"><h2>Shops Outflow has learned <span class="side">${state.rules.length}</span></h2>
+      ${state.rules.length ? state.rules.slice().sort((a, b) => a.merchant_key.localeCompare(b.merchant_key)).map(r => `<div class="row"><div class="main"><div class="title">${esc(C.cleanMerchant(r.merchant_key))}</div><div class="sub">Always ${esc(r.category)}</div></div><button class="btn danger" style="height:36px;padding:0 6px" data-rule="${r.id}">Forget</button></div>`).join('')
+      : '<p class="muted" style="margin:0;font-size:14px">When you change a category and keep "Always for this shop" on, it shows up here.</p>'}</section>
+    <section class="card"><h2>Account</h2><div class="row"><div class="main"><div class="title">${esc(state.user.email || '')}</div><div class="sub">${live().length} lines saved</div></div>
+      <button class="btn" id="signOut" style="height:40px">Sign out</button></div></section>
+  </div>`;
+  $('#mImp').onclick = openImport; $('#addPlan').onclick = () => openPlanSheet(null); $('#addCat').onclick = () => openCatSheet(null);
+  $('#signOut').onclick = async () => { await api.signOut(); };
+  el.querySelectorAll('[data-plan]').forEach(b => b.onclick = () => openPlanSheet(state.plans.find(p => p.id === b.dataset.plan)));
+  el.querySelectorAll('[data-cat]').forEach(b => b.onclick = () => openCatSheet(state.cats.find(c => c.id === b.dataset.cat)));
+  el.querySelectorAll('[data-rule]').forEach(b => b.onclick = async () => {
+    try { await api.deleteRule(b.dataset.rule); state.rules = state.rules.filter(r => r.id !== b.dataset.rule); render(); toast('Forgotten. Future imports will guess again.'); } catch (e) { toast(friendlyError(e), true); }
+  });
+}
+
+// ------------------------------------------------------------------ sheets
+function openSheet(title, body, foot, onMount) {
+  closeSheet(true);
+  const scrim = document.createElement('div'); scrim.className = 'scrim';
+  const sh = document.createElement('div'); sh.className = 'sheet'; sh.setAttribute('role', 'dialog'); sh.setAttribute('aria-modal', 'true'); sh.setAttribute('aria-label', title);
+  sh.innerHTML = `<div class="grabber"></div><div class="sheet-h"><h3>${esc(title)}</h3><button class="icon-btn" data-close aria-label="Close">${I.close}</button></div>
+    <div class="sheet-b">${body}</div>${foot ? `<div class="sheet-f">${foot}</div>` : ''}`;
+  document.body.append(scrim, sh);
+  document.body.style.overflow = 'hidden';
+  requestAnimationFrame(() => { scrim.classList.add('show'); sh.classList.add('show'); });
+  scrim.onclick = () => closeSheet(); sh.querySelector('[data-close]').onclick = () => closeSheet();
+  if (onMount) onMount(sh);
+  return sh;
+}
+function closeSheet(instant) {
+  document.querySelectorAll('.sheet,.scrim').forEach(n => { if (instant) n.remove(); else { n.classList.remove('show'); setTimeout(() => n.remove(), 260); } });
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+function catGrid(selected) {
+  return `<div class="cat-grid">${state.cats.map(c => `<button type="button" class="cat-opt" data-c="${esc(c.name)}" aria-pressed="${c.name === selected}"><span class="e">${esc(c.icon || '•')}</span>${esc(c.name)}</button>`).join('')}</div>`;
+}
+
+// ---------- add / edit a transaction
+function openTxSheet(t) {
+  const isNew = !t;
+  const d = t || { date: localToday(), cents: null, merchant: '', category: 'Other', my_share_cents: null, note: '' };
+  let cat = d.category, shared = d.my_share_cents != null;
+  const amountCents = d.kind === 'chexy_fee' ? d.cents : d.cents;
+  const body = `
+    <div class="amount-input num"><span>$</span><input id="fAmt" inputmode="decimal" placeholder="0.00" value="${esc(centsToInput(amountCents))}" aria-label="Amount"></div>
+    ${d.cents != null && d.cents < 0 ? '<div class="muted" style="text-align:center;font-size:13px">Refund (lowers spending)</div>' : ''}
+    <label class="field"><span>What was it?</span><input class="input" id="fWhat" value="${esc(d.merchant || d.description || '')}" placeholder="e.g. Groceries at Safeway" autocomplete="off"></label>
+    <div class="field"><span>Category</span>${catGrid(cat)}</div>
+    ${!isNew && d.merchant ? `<div class="switch-row"><div><div class="t">Always for ${esc(d.merchant)}</div><div class="d">Use this category for this shop from now on</div></div><label class="switch"><input type="checkbox" id="fAlways"><i></i></label></div>` : ''}
+    <label class="field"><span>Date</span><input class="input" type="date" id="fDate" value="${esc(d.date)}"></label>
+    <div class="switch-row" style="margin-top:6px"><div><div class="t">Paid for others</div><div class="d">Only your share counts as spending</div></div><label class="switch"><input type="checkbox" id="fShared" ${shared ? 'checked' : ''}><i></i></label></div>
+    <label class="field ${shared ? '' : 'hidden'}" id="shareField" style="margin-top:0"><span>My share</span><input class="input" id="fShare" inputmode="decimal" placeholder="0.00 if it was all for someone else" value="${esc(centsToInput(d.my_share_cents))}">
+      <div class="splits">${[2, 3, 4].map(n => `<button type="button" data-split="${n}">Split ${n} ways</button>`).join('')}<button type="button" data-split="0">None of it</button></div></label>
+    ${d.note ? `<div class="note">${esc(d.note)}</div>` : ''}
+    ${!isNew && d.description && d.source !== 'manual' ? `<div class="note" style="word-break:break-word">On your statement: ${esc(d.description)}</div>` : ''}
+    ${!isNew ? '<button type="button" class="btn danger block" id="fDel" style="margin-top:14px">Delete this line</button>' : ''}`;
+  openSheet(isNew ? 'Add an expense' : 'Edit', body, `<button class="btn primary block" id="fSave">${isNew ? 'Add' : 'Save'}</button>`, sh => {
+    const amt = $('#fAmt', sh);
+    const fit = () => { amt.style.width = Math.max(2.2, (amt.value || amt.placeholder).length * 0.58 + 0.1) + 'em'; };
+    fit(); amt.addEventListener('input', fit);
+    if (isNew) setTimeout(() => amt.focus(), 300);
+    sh.querySelectorAll('.cat-opt').forEach(b => b.onclick = () => { cat = b.dataset.c; sh.querySelectorAll('.cat-opt').forEach(x => x.setAttribute('aria-pressed', x === b)); const al = $('#fAlways', sh); if (al && cat !== d.category) al.checked = true; });
+    sh.querySelectorAll('[data-split]').forEach(b => b.onclick = e => {
+      e.preventDefault(); const n = +b.dataset.split, full = Math.abs(parseMoneyInput(amt.value) || 0);
+      $('#fShare', sh).value = centsToInput(n ? Math.round(full / n) : 0);
+    });
+    $('#fShared', sh).onchange = e => { shared = e.target.checked; $('#shareField', sh).classList.toggle('hidden', !shared); if (shared) $('#fShare', sh).focus(); };
+    if (isNew) $('#fWhat', sh).addEventListener('change', e => { const guess = C.categorize(e.target.value, state.rules, catNames()); if (cat === 'Other' && guess !== 'Other') { cat = guess; sh.querySelectorAll('.cat-opt').forEach(x => x.setAttribute('aria-pressed', x.dataset.c === cat)); } });
+    const del = $('#fDel', sh);
+    if (del) del.onclick = async () => {
+      if (del.dataset.armed !== '1') { del.dataset.armed = '1'; del.textContent = 'Tap again to delete'; return; }
+      try { await api.updateTx([t.id], { deleted: true }); t.deleted = true; closeSheet(); render(); toast('Deleted. It won\'t come back if you import that statement again.'); } catch (e) { toast(friendlyError(e), true); }
+    };
+    $('#fSave', sh).onclick = async () => {
+      let cents = parseMoneyInput(amt.value);
+      if (cents == null || cents === 0) { toast('Enter an amount, like 12.50.', true); amt.focus(); return; }
+      if (!isNew && d.cents < 0 && cents > 0) cents = -cents; // keep refunds as refunds
+      const what = $('#fWhat', sh).value.trim(); if (!what) { toast('Add a short description, like "Lunch with friends".', true); $('#fWhat', sh).focus(); return; }
+      const date = $('#fDate', sh).value; if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { toast('Pick a date.', true); return; }
+      let share = null;
+      if (shared) { share = parseMoneyInput($('#fShare', sh).value || '0'); if (share == null || share < 0) { toast('Enter your share as an amount, like 80 or 0.', true); return; } if (share > Math.abs(cents)) { toast('Your share can\'t be more than the full amount.', true); return; } if (cents < 0) share = -share; }
+      const btn = $('#fSave', sh); btn.disabled = true;
+      try {
+        if (isNew) {
+          const [row] = await api.insertTx([{ date, description: what, merchant: what, cents, original_cents: cents, my_share_cents: share, category: cat, kind: 'manual', source: 'manual', note: null, fingerprint: null }]);
+          state.txns.push(row); state.month = C.monthKey(date); toast('Added');
+        } else {
+          const patch = { date, merchant: what, cents, my_share_cents: share, category: cat };
+          if (d.kind === 'manual') patch.description = what;
+          await api.updateTx([t.id], patch); Object.assign(t, patch);
+          const al = $('#fAlways', sh);
+          if (al && al.checked) await learn(t, cat); else toast('Saved');
+        }
+        closeSheet(); render();
+      } catch (e) { btn.disabled = false; toast(friendlyError(e), true); }
+    };
+  });
+}
+
+// ---------- one-tap category change
+function openCatPicker(t) {
+  const canLearn = t.source !== 'manual' || t.merchant;
+  openSheet(t.merchant || 'Category', `
+    ${canLearn ? `<div class="switch-row" style="padding-top:0"><div><div class="t">Always for ${esc(t.merchant)}</div><div class="d">Also changes past and future lines from this shop</div></div><label class="switch"><input type="checkbox" id="pAlways" checked><i></i></label></div>` : ''}
+    ${catGrid(t.category)}`, null, sh => {
+    sh.querySelectorAll('.cat-opt').forEach(b => b.onclick = async () => {
+      const cat = b.dataset.c, always = $('#pAlways', sh) && $('#pAlways', sh).checked;
+      try {
+        if (cat !== t.category) { await api.updateTx([t.id], { category: cat }); t.category = cat; }
+        if (always) await learn(t, cat); else toast('Moved to ' + cat);
+        closeSheet(); render();
+      } catch (e) { toast(friendlyError(e), true); }
+    });
+  });
+}
+/** Remember the shop, and fix the other lines from the same shop. */
+async function learn(t, cat) {
+  const key = C.merchantKey(t.description || t.merchant);
+  if (!key || t.kind === 'chexy_fee' || t.kind === 'fee') { toast('Saved'); return; }
+  const rule = await api.upsertRule(key, cat);
+  state.rules = state.rules.filter(r => r.merchant_key !== key).concat(rule);
+  const same = live().filter(x => x.id !== t.id && x.category !== cat && x.kind !== 'chexy_fee' && x.kind !== 'fee' && C.merchantKey(x.description || x.merchant) === key);
+  if (same.length) { await api.updateTx(same.map(x => x.id), { category: cat }); same.forEach(x => x.category = cat); }
+  toast(`${t.merchant} will always be ${cat}` + (same.length ? ` · ${same.length} more ${same.length === 1 ? 'line' : 'lines'} updated` : ''));
+}
+
+// ---------- categories
+function openCatSheet(c) {
+  const isNew = !c, isOther = c && c.name === 'Other';
+  openSheet(isNew ? 'New category' : 'Edit category', `
+    <label class="field"><span>Name</span><input class="input" id="cName" value="${esc(c ? c.name : '')}" placeholder="e.g. Pets" ${isOther ? 'disabled' : ''}></label>
+    <label class="field"><span>Emoji</span><input class="input" id="cIcon" value="${esc(c ? c.icon || '' : '')}" placeholder="🐾" maxlength="4" style="width:90px;text-align:center;font-size:20px"></label>
+    ${!isNew && !isOther ? '<button class="btn danger block" id="cDel" style="margin-top:16px">Delete category</button><p class="muted" style="font-size:13px;text-align:center;margin:4px 0 0">Its lines move to Other.</p>' : ''}`,
+    `<button class="btn primary block" id="cSave">${isNew ? 'Create' : 'Save'}</button>`, sh => {
+      if (isNew) setTimeout(() => $('#cName', sh).focus(), 300);
+      $('#cSave', sh).onclick = async () => {
+        const name = $('#cName', sh).value.trim().replace(/\s+/g, ' '), icon = $('#cIcon', sh).value.trim() || '•';
+        if (!name) { toast('Give the category a name.', true); return; }
+        if (state.cats.some(x => x.name.toLowerCase() === name.toLowerCase() && x !== c)) { toast('You already have a category called ' + name + '.', true); return; }
+        try {
+          if (isNew) { const [row] = await api.insertCats([{ name, icon, color: null, sort: 100 + state.cats.length }]); state.cats.push(row); toast('Created ' + name); }
+          else {
+            const old = c.name;
+            await api.updateCat(c.id, { name, icon });
+            if (old !== name) { await api.updateTxCategory(old, name); await api.updateRulesCategory(old, name); state.txns.forEach(t => { if (t.category === old) t.category = name; }); state.rules.forEach(r => { if (r.category === old) r.category = name; }); if (state.filterCat === old) state.filterCat = name; }
+            c.name = name; c.icon = icon; toast('Saved');
+          }
+          closeSheet(); render();
+        } catch (e) { toast(friendlyError(e), true); }
+      };
+      const del = $('#cDel', sh);
+      if (del) del.onclick = async () => {
+        if (del.dataset.armed !== '1') { del.dataset.armed = '1'; del.textContent = 'Tap again to delete'; return; }
+        try {
+          await api.updateTxCategory(c.name, 'Other'); await api.updateRulesCategory(c.name, 'Other'); await api.deleteCat(c.id);
+          state.txns.forEach(t => { if (t.category === c.name) t.category = 'Other'; }); state.rules.forEach(r => { if (r.category === c.name) r.category = 'Other'; });
+          state.cats = state.cats.filter(x => x !== c); if (state.filterCat === c.name) state.filterCat = '';
+          closeSheet(); render(); toast('Deleted. Its lines are now in Other.');
+        } catch (e) { toast(friendlyError(e), true); }
+      };
+    });
+}
+
+// ---------- instalment plans
+function openPlanSheet(p) {
+  const cur = C.monthKey(localToday()), isNew = !p;
+  const left = p ? C.planMonthsLeft(p, cur) : '';
+  openSheet(isNew ? 'Add a plan' : 'Edit plan', `
+    <label class="field"><span>Name</span><input class="input" id="pName" value="${esc(p ? p.name : '')}" placeholder="e.g. Newegg laptop"></label>
+    <label class="field"><span>Monthly amount</span><input class="input" id="pAmt" inputmode="decimal" placeholder="0.00" value="${esc(p ? centsToInput(p.monthly_cents) : '')}"></label>
+    <label class="field"><span>Months left, counting this month</span><input class="input" id="pLeft" inputmode="numeric" placeholder="e.g. 10" value="${esc(left)}"></label>
+    <p class="muted" style="font-size:13px">This list helps you see what you still owe. It doesn't add to your spending, because the purchase already counted when you made it.</p>
+    ${!isNew ? '<button class="btn danger block" id="pDel" style="margin-top:8px">Delete plan</button>' : ''}`,
+    `<button class="btn primary block" id="pSave">${isNew ? 'Add plan' : 'Save'}</button>`, sh => {
+      $('#pSave', sh).onclick = async () => {
+        const name = $('#pName', sh).value.trim(), cents = parseMoneyInput($('#pAmt', sh).value), n = parseInt($('#pLeft', sh).value, 10);
+        if (!name) { toast('Give the plan a name.', true); return; }
+        if (!cents || cents < 0) { toast('Enter the monthly amount, like 237.31.', true); return; }
+        if (!(n >= 0 && n <= 120)) { toast('Enter how many months are left, like 10.', true); return; }
+        const plan = p ? { ...p } : { start_month: cur };
+        plan.name = name; plan.monthly_cents = cents;
+        // Keep past months in place; "months left" counts from this month.
+        if (plan.start_month > cur) plan.start_month = cur;
+        plan.total_months = Math.max(0, C.monthsBetween(plan.start_month, cur)) + n;
+        try { const saved = await api.savePlan(plan); state.plans = state.plans.filter(x => x.id !== saved.id).concat(saved); closeSheet(); render(); toast('Saved'); }
+        catch (e) { toast(friendlyError(e), true); }
+      };
+      const del = $('#pDel', sh);
+      if (del) del.onclick = async () => {
+        if (del.dataset.armed !== '1') { del.dataset.armed = '1'; del.textContent = 'Tap again to delete'; return; }
+        try { await api.deletePlan(p.id); state.plans = state.plans.filter(x => x.id !== p.id); closeSheet(); render(); toast('Plan deleted'); } catch (e) { toast(friendlyError(e), true); }
+      };
+    });
+}
+
+// ------------------------------------------------------------------ import
+let lastCard = 'amex';
+try { lastCard = localStorage.getItem('outflow.card') || 'amex'; } catch (e) {}
+function openImport() {
+  let card = lastCard;
+  openSheet('Import a statement', `
+    <div class="field" style="margin-top:4px"><span>Which card?</span><div class="seg" id="cardSeg">${CARDS.map(c => `<button type="button" data-card="${c.id}" aria-pressed="${c.id === card}">${c.name}</button>`).join('')}</div></div>
+    <label class="drop" id="drop"><b>Choose a CSV or PDF statement</b>Download it from your card's website first.<input type="file" id="file" accept=".csv,.pdf,text/csv,application/pdf" class="hidden"></label>
+    <p class="muted" style="font-size:13px;margin-top:12px">Credit card statements only. Card payments are left out, and lines you've already imported are skipped, so overlapping statements are fine.</p>`, null, sh => {
+    sh.querySelectorAll('[data-card]').forEach(b => b.onclick = () => { card = b.dataset.card; sh.querySelectorAll('[data-card]').forEach(x => x.setAttribute('aria-pressed', x === b)); });
+    $('#file', sh).onchange = async e => {
+      const f = e.target.files[0]; if (!f) return;
+      lastCard = card; try { localStorage.setItem('outflow.card', card); } catch (err) {}
+      $('#drop', sh).innerHTML = '<b>Reading ' + esc(f.name) + '…</b>';
+      try {
+        if (/\.pdf$/i.test(f.name) || f.type === 'application/pdf') await previewPdf(f, card);
+        else previewCsv(await f.text(), f.name, card, false);
+      } catch (err) { console.error(err); closeSheet(); toast(/pdf/i.test(String(err && err.message)) || /\.pdf$/i.test(f.name) ? "Couldn't read that PDF. Try the CSV download from your card's website instead." : friendlyError(err), true); }
+    };
+  });
+}
+function existingFingerprints() { return new Set(state.txns.map(t => t.fingerprint).filter(Boolean)); }
+function previewCsv(text, name, card, flip) {
+  const r = C.csvToRaw(text, { flip });
+  if (r.error) { closeSheet(); toast(r.error, true); return; }
+  if (!r.lines.length) { closeSheet(); toast("No purchases found in that file. Make sure it's a credit card statement CSV.", true); return; }
+  const p = C.buildImport(r.lines, { source: card, existing: existingFingerprints(), rules: state.rules, categories: catNames() });
+  showPreview(p, { name, card, unreadable: r.unreadable.length, pending: r.pending, canFlip: card !== 'amex' || r.purchasesNegative, onFlip: () => previewCsv(text, name, card, !flip) });
+}
+async function previewPdf(file, card) {
+  const pdfjs = await import(PDFJS_URL);
+  pdfjs.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+  const doc = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  const pages = [];
+  for (let i = 1; i <= doc.numPages; i++) {
+    const content = await (await doc.getPage(i)).getTextContent();
+    pages.push(content.items.map(it => ({ str: it.str, x: it.transform[4], y: it.transform[5], w: it.width })));
+  }
+  const parsed = C.parseStatementText(C.pdfItemsToLines(pages));
+  if (!parsed.lines.length) { closeSheet(); toast("Couldn't find any purchases in that PDF. If it's a scanned image, use the CSV download instead.", true); return; }
+  const check = C.balanceCheck(parsed);
+  const p = C.buildImport(parsed.lines, { source: card, existing: existingFingerprints(), rules: state.rules, categories: catNames() });
+  showPreview(p, { name: file.name, card, check });
+}
+function showPreview(p, info) {
+  const include = new Set(p.items.map((_, i) => i).filter(i => !p.items[i].suggestSkip));
+  const shares = new Map(); // line index -> my share in cents (0 = all for someone else)
+  const suggested = SHARED_CARDS.includes(info.card) ? p.items.map((it, i) => it.paidOff ? i : -1).filter(i => i >= 0) : [];
+  const counts = i => shares.has(i) ? shares.get(i) : p.items[i].cents;
+  const chipText = i => !shares.has(i) ? 'Paid for others?' : shares.get(i) === 0 ? 'All for others' : 'My share ' + fmt(shares.get(i));
+  const skipBits = [];
+  if (p.payments.length) skipBits.push(`<li>${p.payments.length} card ${p.payments.length === 1 ? 'payment' : 'payments'} (${fmt(Math.abs(p.totals.payments))}). Not spending.</li>`);
+  if (p.planMoves.length) skipBits.push(`<li>${p.planMoves.length} moved to an instalment plan (${fmt(Math.abs(p.planMoves.reduce((a, l) => a + l.cents, 0)))}). Already counted when you bought it.</li>`);
+  if (p.duplicates.length) skipBits.push(`<li>${p.duplicates.length} already imported</li>`);
+  if (p.zero.length) skipBits.push(`<li>${p.zero.length} with a $0 amount</li>`);
+  if (info.pending) skipBits.push(`<li>${info.pending} still pending. Import again once they've posted.</li>`);
+  if (info.unreadable) skipBits.push(`<li>${info.unreadable} ${info.unreadable === 1 ? 'row' : 'rows'} couldn't be read</li>`);
+  const chexy = p.items.filter(i => i.kind === 'chexy_fee');
+  let check = '';
+  if (info.check) {
+    const c = info.check;
+    if (c.status === 'ok') check = `<div class="note ok">✓ Lines add up to the statement balance (${fmt(c.closing)}).</div>`;
+    else if (c.status === 'mismatch') check = `<div class="note warn">Lines don't add up to the statement balance. Statement says ${fmt(c.closing)}; lines give ${fmt(c.expected)} (off by ${fmt(Math.abs(c.diff))}). Some lines may not have been read, so compare with your statement, or use the CSV instead.</div>`;
+    else check = `<div class="note">Couldn't find the balance on this statement, so the total wasn't checked. Compare the total with your statement.</div>`;
+  }
+  const months = [...new Set(p.items.map(i => i.date.slice(0, 7)))].sort();
+  const range = months.length ? (months.length === 1 ? monthName(months[0]) : monthName(months[0], true) + ' ' + months[0].slice(0, 4) + ' – ' + monthName(months[months.length - 1], true) + ' ' + months[months.length - 1].slice(0, 4)) : '';
+  const rowAmt = i => { const it = p.items[i]; return shares.has(i) ? `${fmt(shares.get(i))}<s>${fmt(it.cents)}</s>` : fmt(it.cents); };
+  const rows = p.items.map((it, i) => `<div class="prev-row ${include.has(i) ? '' : 'off'}" data-row="${i}"><input type="checkbox" data-i="${i}" ${include.has(i) ? 'checked' : ''} aria-label="Include ${esc(it.merchant)}">
+    <div class="main"><div class="title">${esc(it.merchant)}</div><div class="sub">${esc(dayLabel(it.date))} · ${esc(it.category)}${it.kind === 'chexy_fee' ? ' · fee only' : ''}${it.kind === 'purchase' && it.cents > 0 ? `<button type="button" class="chip" data-o="${i}" aria-pressed="false">Paid for others?</button>` : ''}</div>
+      ${it.kind === 'purchase' && it.cents > 0 ? `<div class="share-ed hidden" data-ed="${i}"><div class="in">My share <span>$</span><input inputmode="decimal" data-sh="${i}" placeholder="0.00" aria-label="My share of ${esc(it.merchant)}"></div>
+        <div class="splits">${[2, 3, 4].map(n => `<button type="button" data-sp="${i}:${n}">Split ${n}</button>`).join('')}<button type="button" data-sp="${i}:0">None</button><button type="button" data-sp="${i}:x">All mine</button></div></div>` : ''}
+      ${it.suggestSkip ? `<div class="sub" style="white-space:normal">${esc(it.note)}</div>` : ''}</div>
+    <div class="amt num ${it.cents < 0 ? 'refund' : ''}" style="font-size:14px" data-a="${i}">${fmt(it.cents)}</div></div>`).join('');
+  const sh = openSheet('Check before saving', `
+    <div class="muted" style="font-size:13px;margin-bottom:8px">${esc(info.name)} · ${esc((CARDS.find(c => c.id === info.card) || {}).name || '')}${range ? ' · ' + esc(range) : ''}</div>
+    <div class="stats"><div class="stat"><div class="k">New lines</div><div class="v num" id="pvN">${p.items.length}</div></div>
+      <div class="stat"><div class="k">Spending</div><div class="v num" id="pvT">${fmt(p.totals.spend)}</div></div></div>
+    ${check}
+    ${chexy.length ? `<div class="note">Chexy: ${chexy.length} rent ${chexy.length === 1 ? 'payment' : 'payments'}. Only the 1.75% fee counts (${fmt(chexy.reduce((a, i) => a + i.cents, 0))}), under Fees.</div>` : ''}
+    ${suggested.length ? `<div class="note" id="pvSug"><b style="color:var(--text)">Bought for someone else?</b> ${suggested.length} ${suggested.length === 1 ? 'purchase was' : 'purchases were'} paid off right after with a card payment of the same amount (${fmt(suggested.reduce((a, i) => a + p.items[i].cents, 0))}).
+      <div style="margin-top:8px"><button type="button" class="btn accent" id="pvMark" style="height:38px;font-size:14px">Mark ${suggested.length === 1 ? 'it' : 'these ' + suggested.length} as for someone else</button></div>
+      <div style="margin-top:6px">They'll count as $0 for you. You can still change any line, here or later.</div></div>` : ''}
+    ${skipBits.length ? `<div style="margin-top:14px;font-weight:600;font-size:14px">Left out</div><ul class="skips">${skipBits.join('')}</ul>` : ''}
+    ${info.canFlip && p.items.length ? `<button class="btn ghost" id="pvFlip" style="padding:0;margin-top:2px;font-size:13px;font-weight:500;color:var(--muted);height:32px">Purchases showing as refunds? Flip signs</button>` : ''}
+    ${p.items.length ? `<div style="margin-top:16px;font-weight:600;font-size:14px;display:flex;justify-content:space-between">Lines to add <span class="muted" style="font-weight:400">Untick to leave out</span></div><div>${rows}</div>`
+      : `<div class="card empty" style="box-shadow:none;background:var(--surface-2)"><h3>Nothing new</h3><p style="margin:0">Everything in this file is already in Outflow.</p></div>`}`,
+    p.items.length ? `<button class="btn" id="pvCancel">Cancel</button><button class="btn primary" style="flex:1" id="pvSave">Add ${p.items.length} ${p.items.length === 1 ? 'line' : 'lines'}</button>` : `<button class="btn primary block" id="pvCancel">Done</button>`);
+  const upd = () => {
+    const chosen = p.items.filter((_, i) => include.has(i));
+    $('#pvN', sh).textContent = chosen.length; $('#pvT', sh).textContent = fmt([...include].reduce((a, i) => a + counts(i), 0));
+    sh.querySelectorAll('[data-row]').forEach(r => { const i = +r.dataset.row; r.classList.toggle('off', !include.has(i)); const c = r.querySelector('[data-o]'); if (c) { c.setAttribute('aria-pressed', shares.has(i)); c.textContent = chipText(i); } r.querySelector('[data-a]').innerHTML = rowAmt(i); });
+    const b = $('#pvSave', sh); if (b) { b.textContent = `Add ${chosen.length} ${chosen.length === 1 ? 'line' : 'lines'}`; b.disabled = !chosen.length; }
+  };
+  sh.querySelectorAll('[data-i]').forEach(cb => cb.onchange = () => { const i = +cb.dataset.i; cb.checked ? include.add(i) : include.delete(i); upd(); });
+  const setShare = (i, c) => { if (c == null) shares.delete(i); else shares.set(i, c); const inp = sh.querySelector(`[data-sh="${i}"]`); if (inp && document.activeElement !== inp) inp.value = c == null ? '' : centsToInput(c); upd(); };
+  sh.querySelectorAll('[data-o]').forEach(b => b.onclick = () => {
+    const i = +b.dataset.o, ed = sh.querySelector(`[data-ed="${i}"]`), opening = ed.classList.contains('hidden');
+    ed.classList.toggle('hidden', !opening);
+    if (opening) { if (!shares.has(i)) setShare(i, 0); const inp = ed.querySelector('input'); inp.value = centsToInput(shares.get(i)); inp.focus(); inp.select(); }
+  });
+  sh.querySelectorAll('[data-sh]').forEach(inp => inp.oninput = () => {
+    const i = +inp.dataset.sh, c = parseMoneyInput(inp.value || '0');
+    if (c != null && c >= 0 && c <= p.items[i].cents) { inp.style.borderColor = ''; shares.set(i, c); upd(); } else inp.style.borderColor = 'var(--danger)';
+  });
+  sh.querySelectorAll('[data-sp]').forEach(b => b.onclick = () => {
+    const [i, n] = b.dataset.sp.split(':'), full = p.items[+i].cents;
+    if (n === 'x') { setShare(+i, null); sh.querySelector(`[data-ed="${i}"]`).classList.add('hidden'); }
+    else setShare(+i, +n ? Math.round(full / +n) : 0);
+  });
+  const mk = $('#pvMark', sh);
+  if (mk) mk.onclick = () => { const all = suggested.every(i => shares.get(i) === 0); suggested.forEach(i => setShare(i, all ? null : 0)); mk.textContent = all ? `Mark ${suggested.length === 1 ? 'it' : 'these ' + suggested.length} as for someone else` : 'Undo'; upd(); };
+  upd();
+  $('#pvCancel', sh).onclick = () => closeSheet();
+  const fl = $('#pvFlip', sh); if (fl) fl.onclick = info.onFlip;
+  const save = $('#pvSave', sh);
+  if (save) save.onclick = async () => {
+    const idx = [...include].sort((a, b) => a - b), chosen = idx.map(i => p.items[i]);
+    save.disabled = true; save.textContent = 'Saving…';
+    try {
+      const rows = await api.insertTx(idx.map(i => p.items[i]).map((it, k) => ({ date: it.date, description: it.description, merchant: it.merchant, cents: it.cents, original_cents: it.original_cents, my_share_cents: shares.has(idx[k]) ? shares.get(idx[k]) : null, category: it.category, kind: it.kind, source: it.source, note: it.note, fingerprint: it.fingerprint })));
+      state.txns.push(...rows);
+      const latest = chosen.map(i => i.date).sort().pop(); if (latest) state.month = C.monthKey(latest);
+      closeSheet(); state.tab = 'month'; render();
+      toast(`Added ${rows.length} ${rows.length === 1 ? 'line' : 'lines'}` + (rows.length < chosen.length ? ` (${chosen.length - rows.length} were already saved)` : ''));
+    } catch (e) { save.disabled = false; upd(); toast(friendlyError(e), true); }
+  };
+}
+
+boot();
+</script>
+</body>
+</html>

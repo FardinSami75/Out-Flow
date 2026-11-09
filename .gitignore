@@ -1,0 +1,5 @@
+# Personal statements must never be committed (public repo)
+*.csv
+*.pdf
+.DS_Store
+node_modules/
